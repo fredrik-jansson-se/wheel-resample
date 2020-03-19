@@ -11,7 +11,7 @@ use rand::{
 
 use rand_distr::Uniform;
 
-/// Return a Vector of n indices sampled according to the weights slice.
+/// Returns a vector of n indices sampled according to the weights slice.
 ///
 /// # Example
 ///
@@ -65,7 +65,7 @@ where
     indices
 }
 
-/// Return a Vector of samples drawn from the particles vector, according to the weights slice.
+/// Returns a vector of weighted samples drawn from the population vector.
 ///
 /// # Example
 ///
@@ -74,15 +74,15 @@ where
 ///
 /// let mut rng = rand::thread_rng();
 /// let weights = [0.1, 0.2, 0.3, 0.8];
-/// let particles = vec![1, 2, 3, 4];
-/// let samples = resample(&mut rng, &weights, &particles);
+/// let population = vec![1, 2, 3, 4];
+/// let samples = resample(&mut rng, &weights, &population);
 ///
-/// assert_eq!(samples.len(), particles.len());
+/// assert_eq!(samples.len(), population.len());
 ///
-/// // Make sure all samples are particles
-/// assert!(samples.iter().all(|s| particles.contains(s)));
+/// // Make sure all samples are population
+/// assert!(samples.iter().all(|s| population.contains(s)));
 /// ```
-pub fn resample<R, T, W>(rng: &mut R, weights: &[W], particles: &[T]) -> Vec<T>
+pub fn resample<R, T, W>(rng: &mut R, weights: &[W], population: &[T]) -> Vec<T>
 where
     R: Rng,
     T: Clone,
@@ -95,23 +95,25 @@ where
         + std::ops::AddAssign
         + std::ops::SubAssign,
 {
-    let indices = resample_idx(rng, weights, particles.len());
+    let indices = resample_idx(rng, weights, population.len());
 
-    indices.iter().map(|&i| particles[i].clone()).collect()
+    indices.iter().map(|&i| population[i].clone()).collect()
 }
 
 #[cfg(test)]
 mod tests {
     #[test]
-    fn resample() {
+    fn resample_idx() {
         let mut rng = rand::thread_rng();
         let weights = [0.1, 0.2, 0.3, 0.8];
 
+        // Make sure we can pull fewer samples than weights
         let sample_idx_2 = super::resample_idx(&mut rng, &weights, 2);
 
         assert_eq!(sample_idx_2.len(), 2);
         assert!(sample_idx_2.iter().all(|&i| i < weights.len()));
 
+        // Make sure we can pull more samples than weights
         let sample_idx_6 = super::resample_idx(&mut rng, &weights, 6);
 
         assert_eq!(sample_idx_6.len(), 6);
