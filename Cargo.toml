@@ -4,7 +4,8 @@ version = "0.1.0"
 authors = ["Fredrik Jansson <fredrik.jansson.se@gmail.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/rust-lang/cargo/"
+repository = "https://github.com/fredrik-jansson-se/wheel-resample"
+description = "Library for weighted sampling"
 
 [dependencies]
 num-traits = "0.2"
