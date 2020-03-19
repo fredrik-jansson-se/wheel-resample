@@ -1,11 +1,23 @@
 //! Re-sampling functions for weighted sampling
 //!
-use num_traits::Zero;
+//! # Example
+//!
+//! ```
+//! use wheel_resample::resample;
+//!
+//! let mut rng = rand::thread_rng();
+//! let weights = [0.1, 0.2, 0.3, 0.8];
+//! let population = vec![1, 2, 3, 4];
+//! let samples = resample(&mut rng, &weights, &population);
+//!
+//! assert_eq!(samples.len(), population.len());
+//!
+//! // Make sure all samples are in the population
+//! assert!(samples.iter().all(|s| population.contains(s)));
+//! ```
+use num_traits::float::Float;
 use rand::{
-    distributions::{
-        uniform::{SampleBorrow, SampleUniform},
-        Distribution,
-    },
+    distributions::{uniform::SampleUniform, Distribution},
     Rng,
 };
 
@@ -30,33 +42,27 @@ use rand_distr::Uniform;
 pub fn resample_idx<R, W>(rng: &mut R, weights: &[W], n: usize) -> Vec<usize>
 where
     R: Rng,
-    W: std::cmp::PartialOrd
-        + Clone
-        + SampleBorrow<W>
-        + SampleUniform
-        + Sized
-        + Zero
-        + std::ops::AddAssign
-        + std::ops::SubAssign,
+    W: SampleUniform + Float,
 {
     let mut max_w = W::zero();
-    for w in weights.iter() {
-        if *w > max_w {
-            max_w = w.clone();
+    // Can we do this more elegant given floats are not Ord?
+    for &w in weights.iter() {
+        if w > max_w {
+            max_w = w;
         }
     }
 
     let uniform_n = Uniform::new(0, weights.len());
-    let uniform_w = Uniform::new(W::zero(), max_w);
+    let uniform_w = Uniform::new(W::zero(), W::from(2.0).unwrap() * max_w);
 
     let mut indices = Vec::with_capacity(n);
 
     let mut b = W::zero();
     let mut i = uniform_n.sample(rng);
     for _ in 0..n {
-        b += uniform_w.sample(rng);
+        b = b + uniform_w.sample(rng);
         while b > weights[i] {
-            b -= weights[i].clone();
+            b = b - weights[i];
             i = (i + 1) % weights.len();
         }
         indices.push(i);
@@ -79,21 +85,14 @@ where
 ///
 /// assert_eq!(samples.len(), population.len());
 ///
-/// // Make sure all samples are population
+/// // Make sure all samples are in the population
 /// assert!(samples.iter().all(|s| population.contains(s)));
 /// ```
 pub fn resample<R, T, W>(rng: &mut R, weights: &[W], population: &[T]) -> Vec<T>
 where
     R: Rng,
     T: Clone,
-    W: std::cmp::PartialOrd
-        + Clone
-        + SampleBorrow<W>
-        + SampleUniform
-        + Sized
-        + Zero
-        + std::ops::AddAssign
-        + std::ops::SubAssign,
+    W: SampleUniform + Float,
 {
     let indices = resample_idx(rng, weights, population.len());
 
