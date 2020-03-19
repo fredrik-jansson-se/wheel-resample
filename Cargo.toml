@@ -6,6 +6,8 @@ edition = "2018"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/fredrik-jansson-se/wheel-resample"
 description = "Library for weighted sampling"
+documentation = "https://docs.rs/wheel-resample"
+keywords = ["re-sample", "sample"]
 
 [dependencies]
 num-traits = "0.2"
